@@ -1,63 +1,66 @@
 package peer;
 
+import utils.ChunkUtils;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 
 public class PeerServer {
 
+    private static final int PORT = 10000;
+
     public static void main(String[] args) {
 
-        int port = 10000;
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-
-            System.out.println("Peer server running on port " + port);
+            System.out.println("Peer server running on port " + PORT);
 
             while (true) {
 
                 Socket socket = serverSocket.accept();
 
-                new Thread(() -> sendFile(socket)).start();
+                new Thread(() -> handleClient(socket)).start();
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void sendFile(Socket socket) {
+    private static void handleClient(Socket socket) {
 
         try (
+                BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()));
-
-                OutputStream output = socket.getOutputStream()
-
+                OutputStream output =
+                        socket.getOutputStream()
         ) {
 
-            String fileName = reader.readLine();
+            String request = reader.readLine();
+
+            String[] parts = request.split(" ");
+
+            String fileName = parts[0];
+            int chunkIndex = Integer.parseInt(parts[1]);
 
             File file = new File("shared/" + fileName);
 
-            if (!file.exists()) {
-                output.write("FILE_NOT_FOUND".getBytes());
-                return;
+            List<byte[]> chunks = ChunkUtils.splitFile(file, 1024);
+
+            if (chunkIndex < chunks.size()) {
+
+                byte[] chunk = chunks.get(chunkIndex);
+
+                output.write(chunk);
+                output.flush();
             }
 
-            FileInputStream fis = new FileInputStream(file);
+            System.out.println("Sent chunk " + chunkIndex);
 
-            byte[] buffer = new byte[4096];
-            int bytes;
-
-            while ((bytes = fis.read(buffer)) != -1) {
-                output.write(buffer, 0, bytes);
-            }
-
-            fis.close();
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

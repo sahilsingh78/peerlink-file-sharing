@@ -21,7 +21,6 @@ public class TrackerServer {
             while (true) {
 
                 Socket socket = serverSocket.accept();
-
                 new Thread(() -> handleClient(socket)).start();
             }
 
@@ -33,21 +32,19 @@ public class TrackerServer {
     private static void handleClient(Socket socket) {
 
         try (
+                BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()));
-
-                PrintWriter writer = new PrintWriter(
-                        socket.getOutputStream(), true)
-
+                PrintWriter writer =
+                        new PrintWriter(socket.getOutputStream(), true)
         ) {
 
             String command = reader.readLine();
 
             if (command.startsWith("REGISTER")) {
 
-                String peerAddress = command.split(" ")[1];
-                peers.add(peerAddress);
+                String peer = command.split(" ")[1];
+                peers.add(peer);
 
                 writer.println("REGISTERED");
 
@@ -60,7 +57,7 @@ public class TrackerServer {
                 writer.println("END");
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

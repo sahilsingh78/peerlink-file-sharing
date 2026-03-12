@@ -1,7 +1,6 @@
 package peer;
 
-import java.io.*;
-import java.net.Socket;
+import java.io.FileOutputStream;
 
 public class PeerClient {
 
@@ -10,33 +9,40 @@ public class PeerClient {
         String host = "localhost";
         int port = 10000;
 
-        try (
+        String fileName = "example.txt";
 
-                Socket socket = new Socket(host, port);
+        int totalChunks = 4;
 
-                PrintWriter writer = new PrintWriter(
-                        socket.getOutputStream(), true);
+        try {
 
-                InputStream input = socket.getInputStream()
+            ChunkDownloader[] workers = new ChunkDownloader[totalChunks];
+            Thread[] threads = new Thread[totalChunks];
 
-        ) {
+            for (int i = 0; i < totalChunks; i++) {
 
-            writer.println("example.txt");
+                workers[i] = new ChunkDownloader(host, port, fileName, i);
 
-            FileOutputStream fos = new FileOutputStream("downloaded_example.txt");
+                threads[i] = new Thread(workers[i]);
+                threads[i].start();
+            }
 
-            byte[] buffer = new byte[4096];
-            int bytes;
+            for (Thread t : threads) {
+                t.join();
+            }
 
-            while ((bytes = input.read(buffer)) != -1) {
-                fos.write(buffer, 0, bytes);
+            FileOutputStream fos =
+                    new FileOutputStream("downloaded_example.txt");
+
+            for (ChunkDownloader worker : workers) {
+
+                fos.write(worker.getChunkData());
             }
 
             fos.close();
 
-            System.out.println("File downloaded");
+            System.out.println("File reconstructed successfully");
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
