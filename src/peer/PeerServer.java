@@ -13,6 +13,8 @@ public class PeerServer {
 
     public static void main(String[] args) {
 
+        registerWithTracker();
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             System.out.println("Peer server running on port " + PORT);
@@ -23,6 +25,24 @@ public class PeerServer {
 
                 new Thread(() -> handleClient(socket)).start();
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void registerWithTracker() {
+
+        try (
+                Socket socket = new Socket("localhost", 9000);
+                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(socket.getInputStream()))
+        ) {
+
+            writer.println("REGISTER localhost:10000");
+
+            System.out.println(reader.readLine());
 
         } catch (Exception e) {
             e.printStackTrace();

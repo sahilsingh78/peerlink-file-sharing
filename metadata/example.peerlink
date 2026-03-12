@@ -1,0 +1,4 @@
+filename=example.txt
+chunks=4
+chunkSize=1024
+tracker=localhost:9000

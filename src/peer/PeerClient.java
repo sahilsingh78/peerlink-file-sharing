@@ -1,24 +1,35 @@
 package peer;
 
+import utils.MetadataUtils;
+
 import java.io.FileOutputStream;
+import java.net.Socket;
+import java.io.*;
+import java.util.*;
 
 public class PeerClient {
 
     public static void main(String[] args) {
 
-        String host = "localhost";
-        int port = 10000;
-
-        String fileName = "example.txt";
-
-        int totalChunks = 4;
-
         try {
 
-            ChunkDownloader[] workers = new ChunkDownloader[totalChunks];
-            Thread[] threads = new Thread[totalChunks];
+            Map<String,String> meta =
+                    MetadataUtils.readMetadata("metadata/example.peerlink");
 
-            for (int i = 0; i < totalChunks; i++) {
+            String fileName = meta.get("filename");
+            int chunks = Integer.parseInt(meta.get("chunks"));
+
+            List<String> peers = getPeers();
+
+            String[] peerInfo = peers.get(0).split(":");
+
+            String host = peerInfo[0];
+            int port = Integer.parseInt(peerInfo[1]);
+
+            ChunkDownloader[] workers = new ChunkDownloader[chunks];
+            Thread[] threads = new Thread[chunks];
+
+            for (int i = 0; i < chunks; i++) {
 
                 workers[i] = new ChunkDownloader(host, port, fileName, i);
 
@@ -31,7 +42,7 @@ public class PeerClient {
             }
 
             FileOutputStream fos =
-                    new FileOutputStream("downloaded_example.txt");
+                    new FileOutputStream("downloaded_" + fileName);
 
             for (ChunkDownloader worker : workers) {
 
@@ -45,5 +56,35 @@ public class PeerClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static List<String> getPeers() {
+
+        List<String> peers = new ArrayList<>();
+
+        try (
+                Socket socket = new Socket("localhost", 9000);
+
+                PrintWriter writer =
+                        new PrintWriter(socket.getOutputStream(), true);
+
+                BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(socket.getInputStream()))
+        ) {
+
+            writer.println("GET_PEERS");
+
+            String line;
+
+            while (!(line = reader.readLine()).equals("END")) {
+
+                peers.add(line);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return peers;
     }
 }
