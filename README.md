@@ -1,61 +1,57 @@
-# PeerLink File Sharing System
+# PeerLink Distributed File Sharing System
 
 ![Java](https://img.shields.io/badge/Language-Java-blue)
 ![Networking](https://img.shields.io/badge/Concept-Socket%20Programming-green)
 ![Architecture](https://img.shields.io/badge/System-Peer%20to%20Peer-orange)
-![Type](https://img.shields.io/badge/Project-Distributed%20Systems-red)
+![Distributed](https://img.shields.io/badge/Type-Distributed%20System-red)
 
-PeerLink is a **peer-to-peer file sharing system built using Java sockets**.
-The project demonstrates how distributed systems can enable **direct file transfer between peers while using a tracker server for peer discovery**.
+PeerLink is a **torrent-style distributed file sharing system built using Java sockets**.
 
-It simulates the architecture used in real-world systems such as **BitTorrent-like file sharing networks**.
+The system allows peers to **discover each other through a tracker server and download files in parallel using chunk-based transfer**, similar to the architecture used in BitTorrent networks.
 
 ---
 
 # 🚀 Features
 
-* Peer-to-peer file sharing using **Java sockets**
+* Peer-to-peer file sharing using Java sockets
 * Tracker server for **peer discovery**
-* Direct file transfer between peers
-* Multithreaded peer server for handling multiple requests
-* Simple distributed system architecture
-* Modular project structure
+* Torrent-style **metadata file (.peerlink)**
+* **Chunk-based file transfer**
+* **Parallel download using multiple threads**
+* Automatic **file reconstruction from chunks**
+* Multithreaded peer server
 
 ---
 
 # 🏗 System Architecture
 
-```text
-Peer Client
-     ↓
+```id="architecture"
+User
+ ↓
+Metadata File (.peerlink)
+ ↓
 Tracker Server
-     ↓
+ ↓
 Peer Discovery
-     ↓
-Peer Server
-     ↓
-File Transfer
+ ↓
+Multiple Peer Servers
+ ↓
+Parallel Chunk Download
+ ↓
+Chunk Merge
+ ↓
+Final File
 ```
-
-Workflow:
-
-1. Peer registers with the **tracker server**.
-2. Client requests **available peers** from tracker.
-3. Client connects to a **peer server**.
-4. File is transferred directly between peers.
 
 ---
 
 # 📂 Project Structure
 
-```text
+```id="structure"
 peerlink-file-sharing
 │
-├── assets
-│   ├── peer-client-download.png
-│   ├── peer-server-running.png
-│   ├── peer-transfer.png
-│   └── tracker-running.png
+├── metadata
+│   └── example.peerlink
 │
 ├── shared
 │   └── example.txt
@@ -63,13 +59,22 @@ peerlink-file-sharing
 ├── src
 │   ├── peer
 │   │   ├── PeerClient.java
-│   │   └── PeerServer.java
+│   │   ├── PeerServer.java
+│   │   └── ChunkDownloader.java
 │   │
 │   ├── tracker
 │   │   └── TrackerServer.java
 │   │
 │   └── utils
-│       └── FileUtils.java
+│       ├── ChunkUtils.java
+│       ├── FileUtils.java
+│       └── MetadataUtils.java
+│
+├── assets
+│   ├── tracker-running.png
+│   ├── peer-server-running.png
+│   ├── peer-client-download.png
+│   └── peer-transfer.png
 │
 ├── README.md
 └── .gitignore
@@ -87,7 +92,7 @@ Functions:
 
 * Registers peers
 * Stores peer addresses
-* Returns available peers to clients
+* Returns peer list to clients
 
 ---
 
@@ -98,20 +103,81 @@ Acts as a **file provider**.
 Functions:
 
 * Hosts shared files
-* Listens for file requests
-* Sends requested files to peers
+* Splits files into chunks
+* Sends requested chunks to peers
 
 ---
 
 ## Peer Client
 
-Responsible for **downloading files from peers**.
+Responsible for **downloading files**.
 
 Functions:
 
-* Connects to peer server
-* Requests file
-* Saves downloaded file locally
+* Reads metadata file
+* Requests peer list from tracker
+* Downloads chunks in parallel
+* Reconstructs final file
+
+---
+
+# 📄 Metadata File
+
+Example:
+
+```id="metadata"
+metadata/example.peerlink
+```
+
+Content:
+
+```id="metadata-example"
+filename=example.txt
+chunks=4
+chunkSize=1024
+tracker=localhost:9000
+```
+
+This file tells the client:
+
+* file name
+* number of chunks
+* chunk size
+* tracker location
+
+---
+
+# ⚙️ Running the Project
+
+## Compile
+
+```id="compile"
+javac -d out src/peer/*.java src/tracker/*.java src/utils/*.java
+```
+
+---
+
+## Start Tracker Server
+
+```id="tracker"
+java -cp out tracker.TrackerServer
+```
+
+---
+
+## Start Peer Server
+
+```id="peer-server"
+java -cp out peer.PeerServer
+```
+
+---
+
+## Run Peer Client
+
+```id="peer-client"
+java -cp out peer.PeerClient
+```
 
 ---
 
@@ -141,78 +207,28 @@ Functions:
 
 ---
 
-# ⚙️ Running the Project
-
-## Compile
-
-```bash
-javac -d out src/peer/*.java src/tracker/*.java src/utils/*.java
-```
-
----
-
-## Start Tracker Server
-
-```bash
-java -cp out tracker.TrackerServer
-```
-
----
-
-## Start Peer Server
-
-```bash
-java -cp out peer.PeerServer
-```
-
----
-
-## Run Peer Client
-
-```bash
-java -cp out peer.PeerClient
-```
-
----
-
-# 📄 Example File
-
-Example shared file:
-
-```
-shared/example.txt
-```
-
-Contents:
-
-```
-Hello from PeerLink file sharing system.
-This file is transferred using Java sockets.
-```
-
----
-
 # 🧠 Concepts Demonstrated
 
 This project demonstrates:
 
-* Java socket programming
+* Socket programming
 * Peer-to-peer networking
-* Distributed system basics
-* File transfer protocols
-* Multithreaded server architecture
+* Distributed system architecture
+* Chunk-based file transfer
+* Parallel downloads
+* Metadata-driven file sharing
 
 ---
 
 # 🔮 Future Improvements
 
-Possible upgrades:
+Possible enhancements:
 
-* Chunk-based file transfer
-* Parallel downloads from multiple peers
-* Peer authentication
 * File integrity verification using hashing
+* Dynamic peer discovery
+* Peer reputation system
 * GUI interface for file sharing
+* Real torrent-style peer exchange
 
 ---
 
